@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de Ingresos y Salidas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="scrim"></div>
+
+<!-- Panel de fondo (solo admin) -->
+<div id="hud" class="hidden"></div>
+
+<!-- Selector de variantes (flotante, ocultable) -->
+<div id="vswitch" class="hidden">
+  <div class="vs-panel">
+    <div class="vs-h">Diseño para el cliente</div>
+    <button class="vs-opt" data-v="v1"><span class="vs-dot" style="background:linear-gradient(135deg,#39a900,#1f5e00)"></span><span><b>Opción 1</b><span>Verde institucional</span></span></button>
+    <button class="vs-opt" data-v="v2"><span class="vs-dot" style="background:linear-gradient(135deg,#2f7bff,#123f97)"></span><span><b>Opción 2</b><span>Tech oscuro / azul</span></span></button>
+    <button class="vs-opt" data-v="v3"><span class="vs-dot" style="background:linear-gradient(135deg,#7c5cff,#3f2aa8)"></span><span><b>Opción 3</b><span>Violeta redondeado</span></span></button>
+  </div>
+  <button class="vs-toggle" id="vsToggle" title="Ver / ocultar opciones de diseño">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg>
+  </button>
+</div>
+
+<div class="shell">
+
+  <!-- ====================== LOGIN (rol + cédula + clave) ====================== -->
+  <section id="screen-login" class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-form">
+        <div class="auth-brand"><span class="logo" id="brandLogo2"></span><div><b class="app-title">Sistema de Ingresos y Salidas</b><span>Inicio de sesión</span></div></div>
+        <h1>Bienvenido</h1>
+        <p class="lead">Selecciona tu rol para continuar.</p>
+        <div class="roles" id="roleTabs">
+          <button data-role="colab" class="on">Colaborador</button>
+          <button data-role="admin">Administrador</button>
+        </div>
+        <div id="cedRow">
+          <label class="field-lbl">Número de cédula</label>
+          <div class="input-wrap"><input id="loginCed" inputmode="numeric" placeholder="Ej: 1001234567" autocomplete="off"></div>
+        </div>
+        <label class="field-lbl">Contraseña</label>
+        <div class="input-wrap"><input id="loginPass" type="password" placeholder="Contraseña" autocomplete="off"></div>
+        <div class="auth-err" id="loginErr"></div>
+        <button class="btn btn-ac" id="loginBtn">Ingresar</button>
+        <p class="auth-note">¿Olvidaste tu contraseña? No hay recuperación automática. Comunícate con el administrador del sistema de la empresa.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== COLABORADOR ====================== -->
+  <section id="screen-colab" class="adm hidden">
+    <aside class="adm-side">
+      <div class="adm-brand"><span class="logo"></span><div><b class="app-title">Ingresos y Salidas</b><span>Panel del colaborador</span></div></div>
+      <nav class="adm-nav"><a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>Mis registros</a></nav>
+      <div class="spacer"></div>
+      <div class="adm-user"><span class="av" id="colabAv">C</span><div><b id="colabName">Colaborador</b><span id="colabCed"></span></div></div>
+      <nav class="adm-nav"><a id="colabLogout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Cerrar sesión</a></nav>
+    </aside>
+    <main class="adm-main">
+      <div class="adm-head"><div><h1>Mis registros</h1><div class="sub">Consulta tus entradas y salidas.</div></div></div>
+      <div class="kpis" id="colabKpis"></div>
+      <div class="card card-pad filters">
+        <div class="filters-h"><b>Filtros</b></div>
+        <div class="filters-grid">
+          <div class="ffield"><label>Tipo</label><select id="cfTipo"><option value="">Todos</option><option value="entrada">Entradas</option><option value="salida">Salidas</option></select></div>
+          <div class="ffield"><label>Desde</label><input id="cfFrom" type="datetime-local"></div>
+          <div class="ffield"><label>Hasta</label><input id="cfTo" type="datetime-local"></div>
+          <div class="ffield"><label>Minutos tarde ≥</label><input id="cfMin" type="number" min="0" placeholder="0"></div>
+        </div>
+        <div class="filters-actions"><button class="btn btn-ghost btn-sm" id="cfClear">Limpiar</button></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl" id="colabTable"></table></div></div>
+    </main>
+  </section>
+
+  <!-- ====================== ADMINISTRADOR ====================== -->
+  <section id="screen-admin" class="adm hidden">
+    <aside class="adm-side">
+      <div class="adm-brand"><span class="logo"></span><div><b class="app-title">Ingresos y Salidas</b><span>Administrador</span></div></div>
+      <nav class="adm-nav" id="admNav">
+        <a data-page="registros" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>Registros</a>
+        <a data-page="empleados"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Empleados</a>
+        <a data-page="config"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configuración</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="adm-user"><span class="av">A</span><div><b id="adminName">Administrador</b><span id="adminCed"></span></div></div>
+      <nav class="adm-nav"><a id="adminLogout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Cerrar sesión</a></nav>
+    </aside>
+    <main class="adm-main">
+
+      <!-- REGISTROS -->
+      <div class="page on" data-page="registros">
+        <div class="adm-head">
+          <div><h1>Registros de asistencia</h1><div class="sub">Entradas y salidas de todos los colaboradores.</div></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost" id="btnPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15h6M9 18h6M9 12h2"/></svg>PDF</button>
+            <button class="btn btn-ac" id="btnXlsx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13l3 5M11 13l-3 5"/></svg>Excel</button>
+          </div>
+        </div>
+        <div class="kpis" id="admKpis"></div>
+        <div class="card card-pad filters">
+          <div class="filters-h"><b>Filtros</b></div>
+          <div class="filters-grid">
+            <div class="ffield"><label>Cédula</label><input id="afCed" placeholder="Buscar cédula"></div>
+            <div class="ffield"><label>Nombre</label><input id="afNom" placeholder="Buscar nombre"></div>
+            <div class="ffield"><label>Apellidos</label><input id="afApe" placeholder="Buscar apellidos"></div>
+            <div class="ffield"><label>Tipo</label><select id="afTipo"><option value="">Todos</option><option value="entrada">Entradas</option><option value="salida">Salidas</option></select></div>
+            <div class="ffield"><label>Desde</label><input id="afFrom" type="datetime-local"></div>
+            <div class="ffield"><label>Hasta</label><input id="afTo" type="datetime-local"></div>
+            <div class="ffield"><label>Minutos tarde ≥</label><input id="afMin" type="number" min="0" placeholder="0"></div>
+            <div class="ffield" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" id="afClear">Limpiar filtros</button></div>
+          </div>
+        </div>
+        <div class="card"><div class="tbl-wrap"><table class="tbl" id="admTable"></table></div></div>
+      </div>
+
+      <!-- EMPLEADOS -->
+      <div class="page" data-page="empleados">
+        <div class="adm-head"><div><h1>Empleados</h1><div class="sub">Crea usuarios, asigna contraseña y registra la huella.</div></div></div>
+        <div class="grid-2">
+          <div class="card"><div class="tbl-wrap"><table class="tbl" id="empTable"></table></div></div>
+          <div class="card card-pad">
+            <div class="filters-h"><b id="empFormTitle">Nuevo empleado</b></div>
+            <div class="form-row">
+              <div class="ffield"><label>Cédula</label><input id="eCed" inputmode="numeric" placeholder="1001234567"></div>
+              <div class="ffield"><label>Rol</label><select id="eRole"><option value="colab">Colaborador</option><option value="admin">Administrador</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="ffield"><label>Nombres</label><input id="eNom" placeholder="Nombres"></div>
+              <div class="ffield"><label>Apellidos</label><input id="eApe" placeholder="Apellidos"></div>
+            </div>
+            <div class="ffield" style="margin-bottom:14px"><label>Contraseña (por defecto 1234)</label><input id="ePass" value="1234"></div>
+            <div class="fp" id="fpBox">
+              <div class="fp-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11c0 3-1 5-1 7M7 8a5 5 0 0 1 8 0M4 12a8 8 0 0 1 16 0M9 12a3 3 0 0 1 6 0c0 2-1 4-1 6M15 13c0 3 0 5-1 7"/></svg></div>
+              <div class="fp-tx"><b id="fpState">Huella sin registrar</b><span>Simulada mientras se instala el huellero</span></div>
+              <button class="btn btn-ghost btn-sm" id="fpBtn" style="margin-left:auto">Registrar huella</button>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-ac" id="empSave" style="flex:1;justify-content:center">Guardar empleado</button>
+              <button class="btn btn-ghost" id="empCancel" style="display:none">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN -->
+      <div class="page" data-page="config">
+        <div class="adm-head"><div><h1>Configuración</h1><div class="sub">Personaliza el sistema. Todo es configurable desde aquí.</div></div></div>
+        <div class="grid-2">
+          <div class="card card-pad">
+            <div class="filters-h"><b>General</b></div>
+            <div class="ffield" style="margin-bottom:14px"><label>Título de la página</label><input id="cfgTitle"></div>
+            <div class="ffield" style="margin-bottom:16px"><label>Hora de entrada esperada (para calcular minutos tarde)</label><input id="cfgStart" type="time"></div>
+            <button class="btn btn-ac" id="cfgSaveGeneral">Guardar cambios</button>
+            <div class="filters-h" style="margin-top:26px"><b>Estilo del fondo</b></div>
+            <p class="auth-note" style="text-align:left;margin:0">Usa el panel flotante <b>"Estilo del fondo"</b> (abajo a la derecha) para elegir entre los 54 efectos y ajustar velocidad, intensidad y parallax. La selección queda guardada.</p>
+          </div>
+          <div class="card card-pad">
+            <div class="filters-h"><b>Contraseñas</b></div>
+            <div class="ffield" style="margin-bottom:14px"><label>Contraseña de administrador</label><input id="cfgAccess"></div>
+            <button class="btn btn-ac" id="cfgSaveAccess" style="margin-bottom:22px">Actualizar clave de administrador</button>
+            <div class="filters-h"><b>Restablecer contraseña de un colaborador</b></div>
+            <div class="form-row">
+              <div class="ffield"><label>Colaborador</label><select id="cfgWho"></select></div>
+              <div class="ffield"><label>Nueva contraseña</label><input id="cfgNewPass" value="1234"></div>
+            </div>
+            <button class="btn btn-ghost" id="cfgResetPass">Restablecer</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </section>
+</div>
+
+<div id="toastHost"></div>
+
+<script src="shader-engine.js?v=3"></script>
+<script src="panel.js?v=3"></script>
+<script src="app.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# sistema estático — nada que compilar
+.DS_Store
+Thumbs.db
+*.log
